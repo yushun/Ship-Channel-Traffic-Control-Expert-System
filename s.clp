@@ -1,4 +1,4 @@
-
+(clear)
 (deftemplate ship
   (slot number)
   (slot location)
@@ -7,7 +7,7 @@
   (slot desired-time)
   (slot length)
   (slot width)
-  (slot status)        ;ready, busy, finished
+  (slot status)        ;ready,waiting, busy, finished
 )
 
 (deftemplate nonlock
@@ -29,6 +29,8 @@
 (deffacts ships
   (ship (number 1) (location Gulf) (destination Atlantic) (arrival-time 0)
     (desired-time 300)(length 100)(width 50)(status ready))
+  (ship (number 2) (location Gulf) (destination Atlantic) (arrival-time 10)
+    (desired-time 300)(length 100)(width 75)(status ready))
 )
 
 (deffacts locks
@@ -53,82 +55,77 @@
   (current-time 0)
 )
 
+;;
+; traveling through locks
+
 (defrule situation-ship-go-into-lock-eastward
+  (current-time ?time)
   ?s1 <- (ship (number ?num) (location ?next-to-lock) (destination ?destination) (arrival-time ?time) (status ready))
   ?s2 <- (lock (name ?lock) (time ?time-needed) (position left) (ships))
   (connection $? ?next-to-lock ?lock $? ?destination)
-  (current-time ?time)
 =>
-  (modify ?s1 (location ?lock) (arrival-time =(+ ?time ?time-needed)) (status busy))
-  (modify ?s2 (position left-close) (open-time =(+ ?time ?time-needed)) (ships ?num))
+  (bind ?sum (+ ?time ?time-needed))
+  (modify ?s1 (location ?lock) (arrival-time ?sum) (status busy))
+  (modify ?s2 (position left-close) (open-time ?sum) (ships ?num))
+)
+
+(defrule situation-ship-cannot-go-into-lock-eastward
+  (current-time ?time)
+  ?s1 <- (ship (number ?num) (location ?next-to-lock) (destination ?destination) (status ready))
+  ?s2 <- (lock (name ?lock) (time ?time-needed) (position right) (ships))  ; the lock is on the other way and there are no ships
+  (connection $? ?next-to-lock ?lock $? ?destination)
+=>
+  (bind ?sum (+ ?time ?time-needed))
+  (modify ?s1 (arrival-time ?sum))
+  (modify ?s2 (position right-close) (open-time ?sum))
 )
 
 (defrule lock-open-right-side
   (current-time ?time)
-  ?s2 <- (lock (position left-close) (open-time ?otime))
-  (test (eq ?time ?otime))
+  ?s2 <- (lock (position left-close) (open-time ?time))
 =>
   (modify ?s2 (position right))
 )
 
 (defrule lock-open-left-side
   (current-time ?time)
-  ?s2 <- (lock (position right-close) (open-time ?otime))
-  (test (eq ?time ?otime))
+  ?s2 <- (lock (position right-close) (open-time ?time))
 =>
   (modify ?s2 (position left))
 )
 
+;;
+; Traveling through channels
+
 (defrule situation-ship-go-into-channel-eastward
+  (current-time ?time)
   ?s1 <- (ship (number ?num) (location ?next-to-waterway) (destination ?destination) 
     (arrival-time ?time) (width ?ship-width) (status ready))
   ?s2 <- (nonlock (name ?name) (width ?width) (time ?time-needed) (ships $?ships))
   (test (> ?width ?ship-width))
   (connection $? ?next-to-waterway ?name $? ?destination)
-  (current-time ?time)
 =>
   (modify ?s1 (location ?name) (arrival-time =(+ ?time ?time-needed)) (status busy))
   (modify ?s2 (width =(- ?width ?ship-width)) (ships ?num $?ships))
 )
 
-;; this replaces clear-ship-from-waterwaylist
 (defrule move-ship-out-of-waterway
-  ?s1 <- (ship (number ?num) (width ?ship-width) (location ?location) (arrival-time ?atime))
+  ?s3 <- (current-time ?time)
+  ?s1 <- (ship (number ?num) (location ?waterway) (destination ?d) (length ?l) (width ?ship-width) (arrival-time ?time))
   ?s2 <- (nonlock (name ?waterway) (width ?waterway-width) (ships $?list1 ?num $?list2))
-  (current-time ?time)
-  (test (eq ?location ?waterway))
-  (test (eq ?time ?atime))
 =>
   (modify ?s1 (status ready))
   (modify ?s2 (width =(+ ?waterway-width ?ship-width)) (ships $?list1 $?list2))
 )
 
 (defrule move-ship-out-of-lock
-  ?s1 <- (ship (number ?num) (location ?location))
-  ?s2 <- (lock (name ?waterway) (ships ?num) (open-time ?otime))
   (current-time ?time)
-  (test (eq ?location ?waterway))
-  (test (eq ?time ?otime))
+  ?s1 <- (ship (number ?num) (location ?waterway))
+  ?s2 <- (lock (name ?waterway) (ships ?num) (open-time ?time))
 =>
   (modify ?s1 (status ready))
   (modify ?s2 (ships))
 )
-
-;(defrule clear-ship-from-waterwaylist
-;  ?s1 <- (nonlock (name ?waterway) (width ?waterway-width) (ships $?list1 ?num $?list2))
-;  ?s2 <- (ship (number ?num) (width ?ship-width) (location ?location))
-;  (test (neq ?location ?waterway))
-;=>
-;  (modify ?s1 (width =(+ ?waterway-width ?ship-width)) (ships $?list1 $?list2))
-;)
-
-;(defrule clear-ship-from-lock
-;  ?s1 <- (lock (name ?waterway) (ships ?num))
-;  ?s2 <- (ship (number ?num) (location ?location))
-;  (test (neq ?location ?waterway))
-;=>
-;  (modify ?s1 (ships))
-;)
 
 (defrule situation-ship-to-goal
   ?s1 <- (ship (number ?num) (location ?next-to-goal) (destination ?destination) 
@@ -139,7 +136,8 @@
   )
   (current-time ?time)
 =>
-  (modify ?s1 (location ?destination) (status finish))
+  ;(modify ?s1 (location ?destination) (status finish))
+  (retract ?s1) (assert (finish ?num))
 )
 
 (defrule update-time
@@ -151,3 +149,5 @@
   (assert (current-time ?new-time))
 )
 
+(reset)
+(run)
