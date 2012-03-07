@@ -60,11 +60,37 @@
 ;;
 ; traveling through locks
 
-(defrule situation-ship-go-into-lock-eastward
+(defrule situation-ship-channel-to-lock-eastward
+  (current-time ?time)
+  ?s1 <- (ship (number ?num) (location ?next-to-lock) (destination ?destination) (width ?ship-width) (arrival-time ?time) (status ready))
+  ?s2 <- (lock (name ?lock) (time ?time-needed) (position left) (ships))
+  (connection $? ?next-to-lock ?lock $? ?destination)
+  ?s3 <- (nonlock (name ?next-to-lock) (width ?waterway-width) (ships $?list1 ?num $?list2))
+=>
+  (bind ?sum (+ ?time ?time-needed))
+  (modify ?s1 (location ?lock) (arrival-time ?sum) (status busy))
+  (modify ?s2 (position left-close) (open-time ?sum) (ships ?num))
+  (modify ?s3 (width =(+ ?waterway-width ?ship-width)) (ships $?list1 $?list2))
+)
+
+(defrule situation-ship-lock-to-lock-eastward
   (current-time ?time)
   ?s1 <- (ship (number ?num) (location ?next-to-lock) (destination ?destination) (arrival-time ?time) (status ready))
   ?s2 <- (lock (name ?lock) (time ?time-needed) (position left) (ships))
   (connection $? ?next-to-lock ?lock $? ?destination)
+  ?s3 <- (lock (name ?next-to-lock) (position right) (ships $?list1 ?num $?list2))
+=>
+  (bind ?sum (+ ?time ?time-needed))
+  (modify ?s1 (location ?lock) (arrival-time ?sum) (status busy))
+  (modify ?s2 (position left-close) (open-time ?sum) (ships ?num))
+  (modify ?s3 (ships $?list1 $?list2))
+)
+
+(defrule situation-ship-start-to-lock-eastward
+  (current-time ?time)
+  ?s1 <- (ship (number ?num) (location ?next-to-lock) (destination ?destination) (arrival-time ?time) (status ready))
+  ?s2 <- (lock (name ?lock) (time ?time-needed) (position left) (ships))
+  (connection ?next-to-lock ?lock $? ?destination)
 =>
   (bind ?sum (+ ?time ?time-needed))
   (modify ?s1 (location ?lock) (arrival-time ?sum) (status busy))
@@ -83,11 +109,37 @@
 )
 
 
-(defrule situation-ship-go-into-lock-westward
+(defrule situation-ship-channel-to-lock-westward
+  (current-time ?time)
+  ?s1 <- (ship (number ?num) (location ?next-to-lock) (destination ?destination) (width ?ship-width) (arrival-time ?time) (status ready))
+  ?s2 <- (lock (name ?lock) (time ?time-needed) (position right) (ships))
+  ?s3 <- (nonlock (name ?next-to-lock) (width ?waterway-width) (ships $?list1 ?num $?list2))
+  (connection ?destination $? ?lock ?next-to-lock $?)
+=>
+  (bind ?sum (+ ?time ?time-needed))
+  (modify ?s1 (location ?lock) (arrival-time ?sum) (status busy))
+  (modify ?s2 (position right-close) (open-time ?sum) (ships ?num))
+  (modify ?s3 (width =(+ ?waterway-width ?ship-width)) (ships $?list1 $?list2))
+)
+
+(defrule situation-ship-lock-to-lock-westward
   (current-time ?time)
   ?s1 <- (ship (number ?num) (location ?next-to-lock) (destination ?destination) (arrival-time ?time) (status ready))
   ?s2 <- (lock (name ?lock) (time ?time-needed) (position right) (ships))
   (connection ?destination $? ?lock ?next-to-lock $?)
+  ?s3 <- (lock (name ?next-to-lock) (position left) (ships $?list1 ?num $?list2))
+=>
+  (bind ?sum (+ ?time ?time-needed))
+  (modify ?s1 (location ?lock) (arrival-time ?sum) (status busy))
+  (modify ?s2 (position right-close) (open-time ?sum) (ships ?num))
+  (modify ?s3 (ships $?list1 $?list2))
+)
+
+(defrule situation-ship-start-to-lock-westward
+  (current-time ?time)
+  ?s1 <- (ship (number ?num) (location ?next-to-lock) (destination ?destination) (arrival-time ?time) (status ready))
+  ?s2 <- (lock (name ?lock) (time ?time-needed) (position right) (ships))
+  (connection ?destination $? ?lock ?next-to-lock)
 =>
   (bind ?sum (+ ?time ?time-needed))
   (modify ?s1 (location ?lock) (arrival-time ?sum) (status busy))
@@ -122,25 +174,81 @@
 ;;
 ; Traveling through channels
 
-(defrule situation-ship-go-into-channel-eastward
+(defrule situation-ship-channel-to-channel-eastward
+  (current-time ?time)
+  ?s1 <- (ship (number ?num) (location ?next-to-waterway) (destination ?destination)
+    (arrival-time ?time) (width ?ship-width) (status ready))
+  ?s2 <- (nonlock (name ?name) (width ?width) (time ?time-needed) (ships $?ships))
+  (test (> ?width ?ship-width))
+  ?s3 <- (nonlock (name ?next-to-waterway) (width ?waterway-width) (ships $?list1 ?num $?list2))
+  (connection $? ?next-to-waterway ?name $? ?destination)
+=>
+  (modify ?s1 (location ?name) (arrival-time =(+ ?time ?time-needed)) (status busy))
+  (modify ?s2 (width =(- ?width ?ship-width)) (ships ?num $?ships))
+  (modify ?s3 (width =(+ ?waterway-width ?ship-width)) (ships $?list1 $?list2))
+)
+
+(defrule situation-ship-lock-to-channel-eastward
   (current-time ?time)
   ?s1 <- (ship (number ?num) (location ?next-to-waterway) (destination ?destination) 
     (arrival-time ?time) (width ?ship-width) (status ready))
   ?s2 <- (nonlock (name ?name) (width ?width) (time ?time-needed) (ships $?ships))
   (test (> ?width ?ship-width))
+  ?s3 <- (lock (name ?next-to-waterway) (position right) (ships $?list1 ?num $?list2))
   (connection $? ?next-to-waterway ?name $? ?destination)
+=>
+  (modify ?s1 (location ?name) (arrival-time =(+ ?time ?time-needed)) (status busy))
+  (modify ?s2 (width =(- ?width ?ship-width)) (ships ?num $?ships))
+  (modify ?s3 (ships $?list1 $?list2))
+)
+
+(defrule situation-ship-start-to-channel-eastward
+  (current-time ?time)
+  ?s1 <- (ship (number ?num) (location ?next-to-waterway) (destination ?destination)
+    (arrival-time ?time) (width ?ship-width) (status ready))
+  ?s2 <- (nonlock (name ?name) (width ?width) (time ?time-needed) (ships $?ships))
+  (test (> ?width ?ship-width))
+  (connection ?next-to-waterway ?name $? ?destination)
 =>
   (modify ?s1 (location ?name) (arrival-time =(+ ?time ?time-needed)) (status busy))
   (modify ?s2 (width =(- ?width ?ship-width)) (ships ?num $?ships))
 )
 
-(defrule situation-ship-go-into-channel-westward
+(defrule situation-ship-channel-to-channel-westward
   (current-time ?time)
   ?s1 <- (ship (number ?num) (location ?next-to-waterway) (destination ?destination) 
     (arrival-time ?time) (width ?ship-width) (status ready))
   ?s2 <- (nonlock (name ?name) (width ?width) (time ?time-needed) (ships $?ships))
   (test (> ?width ?ship-width))
+  ?s3 <- (nonlock (name ?next-to-waterway) (width ?waterway-width) (ships $?list1 ?num $?list2))
   (connection ?destination $? ?name ?next-to-waterway $?)
+=>
+  (modify ?s1 (location ?name) (arrival-time =(+ ?time ?time-needed)) (status busy))
+  (modify ?s2 (width =(- ?width ?ship-width)) (ships ?num $?ships))
+  (modify ?s3 (width =(+ ?waterway-width ?ship-width)) (ships $?list1 $?list2))
+)
+
+(defrule situation-ship-lock-to-channel-westward
+  (current-time ?time)
+  ?s1 <- (ship (number ?num) (location ?next-to-waterway) (destination ?destination) 
+    (arrival-time ?time) (width ?ship-width) (status ready))
+  ?s2 <- (nonlock (name ?name) (width ?width) (time ?time-needed) (ships $?ships))
+  (test (> ?width ?ship-width))
+  ?s3 <- (lock (name ?next-to-waterway) (position left) (ships $?list1 ?num $?list2))
+  (connection ?destination $? ?name ?next-to-waterway $?)
+=>
+  (modify ?s1 (location ?name) (arrival-time =(+ ?time ?time-needed)) (status busy))
+  (modify ?s2 (width =(- ?width ?ship-width)) (ships ?num $?ships))
+  (modify ?s3 (ships $?list1 $?list2))
+)
+
+(defrule situation-ship-start-to-channel-westward
+  (current-time ?time)
+  ?s1 <- (ship (number ?num) (location ?next-to-waterway) (destination ?destination) 
+    (arrival-time ?time) (width ?ship-width) (status ready))
+  ?s2 <- (nonlock (name ?name) (width ?width) (time ?time-needed) (ships $?ships))
+  (test (> ?width ?ship-width))
+  (connection ?destination $? ?name ?next-to-waterway)
 =>
   (modify ?s1 (location ?name) (arrival-time =(+ ?time ?time-needed)) (status busy))
   (modify ?s2 (width =(- ?width ?ship-width)) (ships ?num $?ships))
@@ -148,12 +256,12 @@
 
 (defrule situation-ship-cannot-into-channel-eastward-not-enough-width
   (current-time ?time)
-  ?s1 <- (ship (number ?num) (location ?next-to-waterway) (destination ?destination) 
+  ?s1 <- (ship (number ?num) (location ?next-to-waterway) (destination ?destination)
     (arrival-time ?time) (width ?ship-width) (status ready))
   ?s2 <- (nonlock (name ?name) (width ?width) (time ?time-needed) (ships $?ships))
   (test (<= ?width ?ship-width))
   (connection $? ?next-to-waterway ?name $? ?destination)
-  (ship (number ~?num) (arrival-time ?new-time&:(> ?new-time ?time)) )
+  (ship (number ~?num) (arrival-time ?new-time&:(neq ?new-time ?time)) )
   (not (ship (number ~?num) (arrival-time ?x&:(< ?x ?new-time))))
 =>
   (modify ?s1 (arrival-time ?new-time))
@@ -166,7 +274,7 @@
   ?s2 <- (nonlock (name ?name) (width ?width) (time ?time-needed) (ships $?ships))
   (test (<= ?width ?ship-width))
   (connection ?destination $? ?name ?next-to-waterway $?)
-  (ship (number ~?num) (arrival-time ?new-time&:(> ?new-time ?time)) )
+  (ship (number ~?num) (arrival-time ?new-time&:(neq ?new-time ?time)) )
   (not (ship (number ~?num) (arrival-time ?x&:(< ?x ?new-time))))
 =>
   (modify ?s1 (arrival-time ?new-time))
@@ -174,25 +282,24 @@
 
 (defrule move-ship-out-of-waterway
   ?s3 <- (current-time ?time)
-  ?s1 <- (ship (number ?num) (location ?waterway) (destination ?d) (length ?l) (width ?ship-width) (arrival-time ?time))
+  ?s1 <- (ship (number ?num) (location ?waterway) (arrival-time ?time) (status ~ready))
   ?s2 <- (nonlock (name ?waterway) (width ?waterway-width) (ships $?list1 ?num $?list2))
 =>
   (modify ?s1 (status ready))
-  (modify ?s2 (width =(+ ?waterway-width ?ship-width)) (ships $?list1 $?list2))
 )
 
 (defrule move-ship-out-of-lock
   (current-time ?time)
-  ?s1 <- (ship (number ?num) (location ?waterway))
+  ?s1 <- (ship (number ?num) (location ?waterway) (status ~ready))
   ?s2 <- (lock (name ?waterway) (ships ?num) (open-time ?time))
 =>
   (modify ?s1 (status ready))
-  (modify ?s2 (ships))
 )
 
-(defrule situation-ship-to-goal
+(defrule situation-ship-channel-to-goal
   ?s1 <- (ship (number ?num) (location ?next-to-goal) (destination ?destination) 
   (arrival-time ?time) (width ?ship-width) (status ready))
+  ?s2 <- (nonlock (name ?next-to-goal) (width ?channel-width) (ships $?list1 ?num $?list2))
   (or
     (connection $? ?next-to-goal ?destination)
     (connection ?destination ?next-to-goal $?)
@@ -201,6 +308,22 @@
 =>
   ;(modify ?s1 (location ?destination) (status finish))
   (retract ?s1) (assert (finish ?num))
+  (modify ?s2 (width =(+ ?channel-width ?ship-width)) (ships $?list1 $?list2))
+)
+
+(defrule situation-ship-lock-to-goal
+  ?s1 <- (ship (number ?num) (location ?next-to-goal) (destination ?destination) 
+  (arrival-time ?time) (width ?ship-width) (status ready))
+  ?s2 <- (lock (name ?next-to-goal) (ships $?list1 ?num $?list2))
+  (or
+    (connection $? ?next-to-goal ?destination)
+    (connection ?destination ?next-to-goal $?)
+  )
+  (current-time ?time)
+=>
+  ;(modify ?s1 (location ?destination) (status finish))
+  (retract ?s1) (assert (finish ?num))
+  (modify ?s2 (ships $?list1 $?list2))
 )
 
 (defrule update-time
