@@ -37,6 +37,20 @@
     (desired-time 300)(length 200)(width 120)(status ready))
   (ship (number 4) (location Gulf) (destination Atlantic) (arrival-time 30)
     (desired-time 350)(length 80)(width 30)(status ready))
+  ;(ship (number 5) (location Atlantic) (destination Gulf) (arrival-time 35)
+  ;  (desired-time 300)(length 130)(width 40)(status ready))
+  ;(ship (number 6) (location Gulf) (destination Atlantic) (arrival-time 40)
+  ;  (desired-time 310)(length 120)(width 30)(status ready))
+  ;(ship (number 7) (location Gulf) (destination Atlantic) (arrival-time 45)
+  ;  (desired-time 320)(length 110)(width 40)(status ready))
+  ;(ship (number 8) (location Gulf) (destination Atlantic) (arrival-time 50)
+  ;  (desired-time 350)(length 60)(width 20)(status ready))
+  ;(ship (number 9) (location Gulf) (destination Atlantic) (arrival-time 55)
+  ;  (desired-time 350)(length 130)(width 45)(status ready))
+  ;(ship (number 10) (location Atlantic) (destination Gulf) (arrival-time 55)
+  ;  (desired-time 350)(length 135)(width 50)(status ready))
+  ;(ship (number 11) (location Atlantic) (destination Gulf) (arrival-time 60)
+  ;  (desired-time 380)(length 140)(width 50)(status ready))
 )
 
 (deffacts locks
@@ -119,7 +133,7 @@
   (bind ?sum (+ ?time ?time-needed))
   (printout t ?time "  " ?num "  arrives  " ?next-to-lock "  " ?time "  " ?lock crlf)
   (printout t ?time "  " ?lock "  changes  right  " (+ ?time ?time-needed) "  left" crlf)
-  (modify ?s1 (arrival-time ?sum))
+  (modify ?s1 (arrival-time ?sum) (status busy))
   (modify ?s2 (position right-close) (open-time ?sum))
 )
 
@@ -178,7 +192,7 @@
   (bind ?sum (+ ?time ?time-needed))
   (printout t ?time "  " ?num "  enters  " ?next-to-lock "  " ?time "  " ?lock crlf)
   (printout t ?time "  " ?lock "  changes  left  " ?sum "  right" crlf)
-  (modify ?s1 (arrival-time ?sum))
+  (modify ?s1 (arrival-time ?sum) (status busy))
   (modify ?s2 (position left-close) (open-time ?sum))
 )
 
@@ -210,6 +224,21 @@
 =>
   (printout t ?time "  " ?lock "  arrives  left  " ?time "  left" crlf)
   (modify ?s2 (position left))
+)
+
+(defrule situation-ship-cannot-go-into-lock-changing
+  (current-time ?time)
+  ?s1 <- (ship (number ?num) (location ?next-to-lock) (destination ?destination) (arrival-time ?time) (status ready))
+  (or
+    (lock (name ?lock) (open-time ?new-time) (position left-close)  (ships))  ; the lock is changing 
+    (lock (name ?lock) (open-time ?new-time) (position right-close) (ships))
+  )
+  (or
+    (connection ?destination $? ?lock ?next-to-lock $?)
+    (connection $? ?next-to-lock ?lock $? ?destination)
+  )
+=>
+  (modify ?s1 (arrival-time (+ 1 ?new-time)) (status busy))
 )
 
 ;;
