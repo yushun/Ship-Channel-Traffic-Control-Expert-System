@@ -123,7 +123,8 @@
   ?s3 <- (nonlock (name ?next-to-lock) (width ?waterway-width) (ships $?list1 ?num $?list2))
   (not (ship (number ?num2&:(< ?num2 ?num)) (location ?next-to-lock) (destination ?destination)))
 =>
-  (printout t "Time: " ?time " lock " ?lock " busy-time: " ?tbt " prod-time: " ?tpt " wasted-time: " (+  ?twt (- ?time ?wt))  crlf)
+  (printout t "Time: "?time "  lock " ?lock "  busy-time: " ?tbt "  prod-time: " ?tpt 
+              "  wasted-time: " (+  ?twt (- ?time ?wt)) "    lock changes to right with ship " ?num crlf)
   (modify ?li (total-wasted-time (+ ?twt (- ?time ?wt))) (total-busy-time (+ ?tbt ?time-needed)) (tpt (+ ?tpt ?time-needed)))
   (bind ?sum (+ ?time ?time-needed))
   (modify ?s1 (location ?lock) (arrival-time ?sum) (status busy))
@@ -141,7 +142,8 @@
   (not (ship (number ?num2&:(< ?num2 ?num)) (location ?next-to-lock) (destination ?destination)))
   ?li <- (lock-info (name ?lock) (wasted-time ?wt) (total-wasted-time ?twt) (total-busy-time ?tbt) (tpt ?tpt))
 =>
-  (printout t "Time: " ?time " lock " ?lock " busy-time: " ?tbt " prod-time: " ?tpt " wasted-time: " (+  ?twt (- ?time ?wt))  crlf)
+  (printout t "Time: " ?time "  lock " ?lock "  busy-time: " ?tbt "  prod-time: " ?tpt 
+              "  wasted-time: " (+  ?twt (- ?time ?wt)) "    lock changes to left with ship " ?num crlf)
   (modify ?li (total-wasted-time (+ ?twt (- ?time ?wt))) (total-busy-time (+ ?tbt ?time-needed)) (tpt (+ ?tpt ?time-needed)))
   (bind ?sum (+ ?time ?time-needed))
   (modify ?s1 (location ?lock) (arrival-time ?sum) (status busy))
@@ -157,7 +159,8 @@
   (not (ship (number ?num2&:(< ?num2 ?num)) (location ?next-to-lock) (destination ?destination)))
   ?li <- (lock-info (name ?lock) (wasted-time ?wt) (total-wasted-time ?twt) (total-busy-time ?tbt) (tpt ?tpt))
 =>
-  (printout t "Time: " ?time " lock " ?lock " busy-time: " ?tbt " prod-time: " ?tpt " wasted-time: " (+  ?twt (- ?time ?wt))  crlf)
+  (printout t "Time: " ?time "  lock " ?lock "  busy-time: " ?tbt "  prod-time: " ?tpt 
+              "  wasted-time: " (+  ?twt (- ?time ?wt)) "    lock changes to right with ship " ?num crlf)
   (modify ?li (total-wasted-time (+ ?twt (- ?time ?wt))) (total-busy-time (+ ?tbt ?time-needed)) (tpt (+ ?tpt ?time-needed)))
   (bind ?sum (+ ?time ?time-needed))
   (modify ?s1 (location ?lock) (arrival-time ?sum) (status busy))
@@ -172,7 +175,8 @@
   (not (ship (number ?num2&:(< ?num2 ?num)) (location ?next-to-lock) (destination ?destination)))
   ?li <- (lock-info (name ?lock) (wasted-time ?wt) (total-wasted-time ?twt) (total-busy-time ?tbt) (tpt ?tpt))
 =>
-  (printout t "Time: " ?time " lock " ?lock " busy-time: " ?tbt " prod-time: " ?tpt " wasted-time: " (+  ?twt (- ?time ?wt))  crlf)
+  (printout t "Time: " ?time "  lock " ?lock "  busy-time: " ?tbt "  prod-time: " ?tpt 
+              "  wasted-time: " (+  ?twt (- ?time ?wt)) "    lock changes to left with ship " ?num crlf)
   (modify ?li (total-wasted-time (+ ?twt (- ?time ?wt))) (total-busy-time (+ ?tbt ?time-needed)) (tpt (+ ?tpt ?time-needed)))
   (bind ?sum (+ ?time ?time-needed))
   (modify ?s1 (location ?lock) (arrival-time ?sum) (status busy))
@@ -189,8 +193,10 @@
   ?s2 <- (lock (name ?lock) (time ?time-needed) (position right) (ships))  
   (connection $? ?next-to-lock ?lock $? ?destination)
   (not (ship (number ?num2&:(< ?num2 ?num)) (location ?next-to-lock) (destination ?destination)))
-  ?li <- (lock-info (name ?lock) (wasted-time ?wt) (total-wasted-time ?twt) (total-busy-time ?tbt))
+  ?li <- (lock-info (name ?lock) (wasted-time ?wt) (total-wasted-time ?twt) (total-busy-time ?tbt) (tpt ?tpt))
 =>
+  (printout t "Time: " ?time "  lock " ?lock "  busy-time: " ?tbt "  prod-time: " ?tpt 
+              "  wasted-time: " (+  ?twt (- ?time ?wt)) "    ship " ?num " activates lock, changing to left" crlf)
   (modify ?li (total-wasted-time (+ ?twt (- ?time ?wt))) (total-busy-time (+ ?tbt ?time-needed)))
   (bind ?sum (+ ?time ?time-needed))
   (modify ?s1 (arrival-time ?sum) (status waiting))
@@ -203,8 +209,10 @@
   ?s2 <- (lock (name ?lock) (time ?time-needed) (position left) (ships)) 
   (connection ?destination $? ?lock ?next-to-lock $?)
   (not (ship (number ?num2&:(< ?num2 ?num)) (location ?next-to-lock) (destination ?destination)))
-  ?li <- (lock-info (name ?lock) (wasted-time ?wt) (total-wasted-time ?twt) (total-busy-time ?tbt))
+  ?li <- (lock-info (name ?lock) (wasted-time ?wt) (total-wasted-time ?twt) (total-busy-time ?tbt) (tpt ?tpt))
 =>
+  (printout t "Time: " ?time "  lock " ?lock "  busy-time: " ?tbt "  prod-time: " ?tpt 
+              "  wasted-time: " (+  ?twt (- ?time ?wt)) "    ship " ?num " activates lock, changing to right" crlf)
   (modify ?li (total-wasted-time (+ ?twt (- ?time ?wt))) (total-busy-time (+ ?tbt ?time-needed)))
   (bind ?sum (+ ?time ?time-needed))
   (modify ?s1 (arrival-time ?sum) (status waiting))
@@ -252,8 +260,10 @@
 (defrule lock-open-right-side
   (current-time ?time)
   ?s2 <- (lock (name ?lock) (position left-close) (open-time ?time))
-  ?li <- (lock-info (name ?lock))
+  ?li <- (lock-info (name ?lock) (wasted-time ?wt) (total-wasted-time ?twt) (total-busy-time ?tbt) (tpt ?tpt))
 =>
+  ;(printout t "Time: " ?time "  lock " ?lock "  busy-time: " ?tbt "  prod-time: " ?tpt 
+  ;            "  wasted-time: " (+  ?twt (- ?time ?wt)) "    opening right" crlf)
   (modify ?li (wasted-time ?time))
   (modify ?s2 (position right))
 )
@@ -261,8 +271,10 @@
 (defrule lock-open-left-side
   (current-time ?time)
   ?s2 <- (lock (name ?lock) (position right-close) (open-time ?time))
-  ?li <- (lock-info (name ?lock))
+  ?li <- (lock-info (name ?lock) (wasted-time ?wt) (total-wasted-time ?twt) (total-busy-time ?tbt) (tpt ?tpt))
 =>
+  ;(printout t "Time: " ?time "  lock " ?lock "  busy-time: " ?tbt "  prod-time: " ?tpt 
+  ;            "  wasted-time: " (+  ?twt (- ?time ?wt)) "    opening left" crlf)
   (modify ?li (wasted-time ?time))
   (modify ?s2 (position left))
 )
@@ -446,8 +458,10 @@
   (connection $? ?lock ?channel $? ?destination)
   (nonlock (name ?channel) (width ?channel-width&:(<= ?channel-width ?width)) (ships $? ?num2 $?))
   (ship (number ?num2&:(< ?num2 ?num)) (location ?channel) (destination ~?destination))
-  ?li <- (lock-info (name ?lock) (wasted-time ?wt) (total-wasted-time ?twt) (total-busy-time ?tbt))
+  ?li <- (lock-info (name ?lock) (wasted-time ?wt) (total-wasted-time ?twt) (total-busy-time ?tbt) (tpt ?tpt))
 =>
+  (printout t "Time: " ?time "  lock " ?lock "  busy-time: " ?tbt "  prod-time: " ?tpt 
+              "  wasted-time: " (+  ?twt (- ?time ?wt)) "    start changing to left with ship " ?num " reversing" crlf)
   (modify ?li (total-wasted-time (+ ?twt (- ?time ?wt))) (total-busy-time (+ ?tbt ?lock-time)))
   (bind ?sum (+ ?time ?lock-time))
   (modify ?s1 (arrival-time ?sum) (status reverse))
@@ -465,8 +479,10 @@
   (nonlock (name ?channel) (width ?channel-width&:(<= ?channel-width ?width)) (ships $? ?num2 $?))
   (ship (number ?num2&:(< ?num2 ?num)) (location ?channel) (destination ~?destination))
   (not (ship (number ?num3&:(< ?num3 ?num)) (arrival-time ?time)))
-  ?li <- (lock-info (name ?lock) (wasted-time ?wt) (total-wasted-time ?twt) (total-busy-time ?tbt))
+  ?li <- (lock-info (name ?lock) (wasted-time ?wt) (total-wasted-time ?twt) (total-busy-time ?tbt) (tpt ?tpt))
 =>
+  ;(printout t "Time: " ?time "  lock " ?lock "  busy-time: " ?tbt "  prod-time: " ?tpt 
+  ;            "  wasted-time: " (+  ?twt (- ?time ?wt)) "    start changing to right with ship " ?num " reversing" crlf)
   (modify ?li (total-wasted-time (+ ?twt (- ?time ?wt))) (total-busy-time (+ ?tbt ?lock-time)))
   (bind ?sum (+ ?time ?lock-time))
   (modify ?s1 (arrival-time ?sum) (status reverse))
@@ -570,38 +586,43 @@
   (ship (arrival-time ?new-time&:(neq ?time ?new-time)))
   (not (ship(arrival-time ?x&:(< ?x ?new-time))))
 =>
+  (printout t "Time: "?time crlf)
   (retract ?cur-time)
   (assert (current-time ?new-time))
 )
 
 (defrule rest-of-time
   (current-time ?time)
-  (finish 1 ?)
-  (finish 2 ?)
-  (finish 3 ?)
-  (finish 4 ?)
-  (finish 5 ?)
-  (finish 6 ?)
-  (finish 7 ?)
-  (finish 8 ?)
-  (finish 9 ?)
-  (finish 10 ?)
-  (finish 11 ?)
-  (finish 12 ?)
-  (finish 13 ?)
-  (finish 14 ?)
-  (finish 15 ?)
-  (finish 16 ?)
-  (finish 17 ?)
-  (finish 18 ?)
-  (finish 19 ?)
-  (finish 20 ?)
-  ?li <- (lock-info (name ?lock) (wasted-time ?wt&:(< ?wt ?time)) (total-wasted-time ?twt))
+  (not (ship))
+  ?li <- (lock-info (name ?lock) (wasted-time ?wt&:(< ?wt ?time)) (total-wasted-time ?twt) (total-busy-time ?tbt) (tpt ?tpt))
   =>
+  (printout t "Time: " ?time "  lock " ?lock "  busy-time: " ?tbt "  prod-time: " ?tpt "  wasted-time: " (+  ?twt (- ?time ?wt)) "    end"  crlf)
   (modify ?li (wasted-time ?time) (total-wasted-time (+ ?twt (- ?time ?wt))))
+  (assert (done ?lock))
+)
+
+; need to be changed if more locks are added
+(defrule summary
+  (done InglisLock)
+  (done DoshLock)
+  (done BuckmanLock)
+=>  
+  (printout t "." crlf)
+  (printout t "Summary Report" crlf)
+  (printout t " " crlf)
+  (assert (status report))
+)
+
+(defrule report-info
+  (status report)
+  (current-time ?time)
+  ?s1 <- (lock-info (name ?lock) (total-wasted-time ?twt) (total-busy-time ?tbt) (tpt ?tpt))
+=>
+  (retract ?s1)
+  (printout t "lock " ?lock "  Total time wasted: " ?twt "    total busy time: " ?tbt
+              "    total productive time: " ?tpt "    busy time percent: " (* (/ ?tbt ?time) 100) 
+              "%    productive time percent: " (*(/ ?tpt ?time) 100) "%" crlf)
 )
 
 (reset)
-(dribble-on "record.txt")
 (run)
-(dribble-off)
