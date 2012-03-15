@@ -1,0 +1,12 @@
+The project has primary 3 files. Each file is separate from the others and have their own rules and facts. The facts and rules are mostly the same, with different print statements. This is done to provide ease of reading and debugging.
+The project.clp show the simulation of the ship through the canals.
+The lock_report.clp produces a report of all the locks activity and their busy, wasted and productive times.
+The vessel_report.clp produces a report of all the ships' activities and their traveling time.
+
+Running the files
+
+The of the files can be run by Load Batch command in the menu of CLIPS IDE.
+Since each clp file have it's own clear, reset and run command, there is no need to type these commands.
+Load Batch the project.clp first to see the simulation.
+Then Load Batch lock_report.clp to see the lock report
+or Load Batch vessel_report.clp to see the vessels report.
